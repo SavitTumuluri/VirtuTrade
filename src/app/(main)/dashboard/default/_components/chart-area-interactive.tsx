@@ -9,14 +9,9 @@ import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { StockData } from "@/types/stock";
 
 export const description = "An interactive area chart";
-
-const chartData = [
-  { date: "2024-04-01", desktop: 222, mobile: 150 },
-  { date: "2024-04-02", desktop: 97, mobile: 180 },
-  { date: "2024-04-03", desktop: 167, mobile: 120 },
-];
 
 const chartConfig = {
   visitors: {
@@ -32,31 +27,46 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+async function getStockData(ticker: string) {
+  const res = await fetch(`/api/stock?ticker=${ticker}`);
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch: ${res.status}`);
+  }
+
+  const result: StockData[] = (await res.json()) as StockData[];
+  return result;
+}
+
 export function ChartAreaInteractive() {
   const isMobile = useIsMobile();
   const [timeRange, setTimeRange] = React.useState("90d");
-  React.useEffect(() => {
-    /*
-    Temporary API call for AAPL meant to serve as a proof of concept. TODO: Add searching functionality
-    */
-    if (isMobile) {
-      setTimeRange("7d");
-    }
-  }, [isMobile]);
 
-  const filteredData = chartData.filter((item) => {
-    const date = new Date(item.date);
-    const referenceDate = new Date();
-    let daysToSubtract = 90;
-    if (timeRange === "30d") {
-      daysToSubtract = 30;
-    } else if (timeRange === "7d") {
-      daysToSubtract = 7;
+  const [stockHistory, setStockHistory] = React.useState<StockData[]>([]);
+
+  React.useEffect(() => {
+    async function getData() {
+      const result: StockData[] = await getStockData("AAPL");
+      setStockHistory(result);
     }
-    const startDate = new Date(referenceDate);
-    startDate.setDate(startDate.getDate() - daysToSubtract);
-    return date >= startDate;
-  });
+    getData();
+  }, []);
+  const filteredData = React.useMemo(() => {
+    return stockHistory.filter((item) => {
+      console.log("hello world");
+      const date = new Date(item.date);
+      const referenceDate = new Date();
+      let daysToSubtract = 90;
+      if (timeRange === "30d") {
+        daysToSubtract = 30;
+      } else if (timeRange === "7d") {
+        daysToSubtract = 7;
+      }
+      const startDate = new Date(referenceDate);
+      startDate.setDate(startDate.getDate() - daysToSubtract);
+      return date >= startDate;
+    });
+  }, [stockHistory]);
 
   return (
     <Card className="@container/card">
