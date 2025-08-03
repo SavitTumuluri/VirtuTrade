@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -44,10 +44,12 @@ export function ChartAreaInteractive() {
 
   const [stockHistory, setStockHistory] = React.useState<StockData[]>([]);
 
+  const [symbol, setSymbol] = React.useState<string>();
   React.useEffect(() => {
     async function getData() {
       const result: StockData[] = await getStockData("AAPL");
       setStockHistory(result);
+      setSymbol("AAPL");
     }
     getData();
   }, []);
@@ -71,7 +73,7 @@ export function ChartAreaInteractive() {
   return (
     <Card className="@container/card">
       <CardHeader>
-        <CardTitle>Stock Prices</CardTitle>
+        <CardTitle>Stock Prices for: ${symbol}</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">Total for the last {timeRange}</span>
           {/* TODO: make text look better; probably a dictionary mapping e.g. 90d -> 3 months*/}
@@ -139,6 +141,7 @@ export function ChartAreaInteractive() {
                 });
               }}
             />
+            <YAxis dataKey="close" domain={["auto", "auto"]} allowDataOverflow={true} />
             <ChartTooltip
               cursor={false}
               defaultIndex={isMobile ? -1 : 10}
