@@ -51,9 +51,9 @@ export function ChartAreaInteractive() {
     }
     getData();
   }, []);
+
   const filteredData = React.useMemo(() => {
     return stockHistory.filter((item) => {
-      console.log("hello world");
       const date = new Date(item.date);
       const referenceDate = new Date();
       let daysToSubtract = 90;
@@ -154,8 +154,7 @@ export function ChartAreaInteractive() {
                 />
               }
             />
-            <Area dataKey="mobile" type="natural" fill="url(#fillMobile)" stroke="var(--color-mobile)" stackId="a" />
-            <Area dataKey="desktop" type="natural" fill="url(#fillDesktop)" stroke="var(--color-desktop)" stackId="a" />
+            <Area dataKey="close" type="natural" fill="url(#fillMobile)" stroke="var(--color-mobile)" stackId="a" />
           </AreaChart>
         </ChartContainer>
       </CardContent>
