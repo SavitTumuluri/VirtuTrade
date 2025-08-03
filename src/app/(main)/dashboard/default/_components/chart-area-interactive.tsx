@@ -147,9 +147,10 @@ export function ChartAreaInteractive() {
   return (
     <Card className="@container/card">
       <CardHeader>
-        <CardTitle>Total Visitors</CardTitle>
+        <CardTitle>Stock Prices</CardTitle>
         <CardDescription>
-          <span className="hidden @[540px]/card:block">Total for the last 3 months</span>
+          <span className="hidden @[540px]/card:block">Total for the last {timeRange}</span>{" "}
+          {/* TODO: make text look better; probably a dictionary mapping e.g. 90d -> 3 months*/}
           <span className="@[540px]/card:hidden">Last 3 months</span>
         </CardDescription>
         <CardAction>
