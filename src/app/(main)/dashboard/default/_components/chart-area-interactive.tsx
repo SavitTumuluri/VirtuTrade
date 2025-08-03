@@ -55,7 +55,9 @@ export function ChartAreaInteractive() {
   }, []);
 
   const filteredData = React.useMemo(() => {
+    // broken filter
     return stockHistory.filter((item) => {
+      console.log("hello world");
       const date = new Date(item.date);
       const referenceDate = new Date();
       let daysToSubtract = 90;
@@ -68,7 +70,7 @@ export function ChartAreaInteractive() {
       startDate.setDate(startDate.getDate() - daysToSubtract);
       return date >= startDate;
     });
-  }, [stockHistory]);
+  }, [stockHistory, timeRange]);
 
   return (
     <Card className="@container/card">
