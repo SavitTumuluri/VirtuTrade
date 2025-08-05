@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useContext } from "react";
 
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
@@ -9,7 +10,8 @@ import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { StockData } from "@/types/stock";
+
+import { StockContext } from "./stock-provider";
 
 export const description = "An interactive area chart";
 
@@ -27,37 +29,20 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-async function getStockData(ticker: string) {
-  const res = await fetch(`/api/stock?ticker=${ticker}`);
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch: ${res.status}`);
-  }
-
-  const result: StockData[] = (await res.json()) as StockData[];
-  return result;
-}
-
 export function ChartAreaInteractive() {
+  const context = useContext(StockContext);
+
+  if (!context) {
+    throw new Error("Must be used within a StockProvider");
+  }
+  const { searchTerm, data } = context;
+
   const isMobile = useIsMobile();
   const [timeRange, setTimeRange] = React.useState("90d");
 
-  const [stockHistory, setStockHistory] = React.useState<StockData[]>([]);
-
-  const [symbol, setSymbol] = React.useState<string>();
-  React.useEffect(() => {
-    async function getData() {
-      const result: StockData[] = await getStockData("AAPL");
-      setStockHistory(result);
-      setSymbol("AAPL");
-    }
-    getData();
-  }, []);
-
+  // update whenever data changes.
   const filteredData = React.useMemo(() => {
-    // broken filter
-    return stockHistory.filter((item) => {
-      console.log("hello world");
+    return data.filter((item) => {
       const date = new Date(item.date);
       const referenceDate = new Date();
       let daysToSubtract = 90;
@@ -70,12 +55,12 @@ export function ChartAreaInteractive() {
       startDate.setDate(startDate.getDate() - daysToSubtract);
       return date >= startDate;
     });
-  }, [stockHistory, timeRange]);
+  }, [data, timeRange]);
 
   return (
     <Card className="@container/card">
       <CardHeader>
-        <CardTitle>Stock Prices for: ${symbol}</CardTitle>
+        <CardTitle>Stock Prices for: ${searchTerm}</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">Total for the last {timeRange}</span>
           {/* TODO: make text look better; probably a dictionary mapping e.g. 90d -> 3 months*/}

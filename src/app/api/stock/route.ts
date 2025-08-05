@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   const ticker = searchParams.get("ticker");
 
   const ourPath: string =
-    path + `tiingo/daily/${ticker}/prices?startDate=2025-05-01&endDate=2025-08-01&token=${process.env.API_KEY}`;
+    path + `tiingo/daily/${ticker}/prices?startDate=2025-05-01&endDate=2025-08-01&token=${process.env.API_KEY}`; // NOTE: bad tickers (e.g. nonexistent) will exhaust rate limit as well.
   const result = await fetch(ourPath);
   if (!result.ok) {
     return NextResponse.json({ error: "Failed to fetch external API" }, { status: 500 });
