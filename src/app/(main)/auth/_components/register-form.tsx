@@ -31,13 +31,38 @@ export function RegisterForm() {
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    toast("You submitted the following values", {
+    /*toast("You submitted the following values", {
       description: (
         <pre className="mt-2 w-[320px] rounded-md bg-neutral-950 p-4">
           <code className="text-white">{JSON.stringify(data, null, 2)}</code>
         </pre>
       ),
+    });*/
+
+    try {
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: data.email,
+        password: data.password,
+      }),
     });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      toast.error(result.error || "Registration failed.");
+      return;
+    }
+
+    toast.success("Registration successful!");
+
+    form.reset();
+  } catch (error) {
+    toast.error("Something went wrong. Please try again.");
+    console.error(error);
+  }
   };
 
   return (
