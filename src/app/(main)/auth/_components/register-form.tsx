@@ -57,6 +57,7 @@ export function RegisterForm() {
       return;
     }
 
+    toast.dismiss(t);
     toast.success("Registration successful!");
 
     form.reset();

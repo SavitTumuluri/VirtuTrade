@@ -6,13 +6,7 @@ const bcrypt = require("bcryptjs")
 
 const port = 3000;
 const hostname = "localhost";
-
-import env from "../../../../env.json";
-const Pool = pg.Pool;
-const pool = new Pool(env);
-pool.connect().then(function () {
-  console.log(`Connected to database ${env.database}`);
-});
+import { pool } from "@/lib/db";
 
 const hash = bcrypt.hash;
 
