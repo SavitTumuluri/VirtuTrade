@@ -53,7 +53,7 @@ export function RegisterForm() {
     const result = await res.json();
 
     if (!res.ok) {
-      toast.error(result.error || "Registration failed.");
+      toast.error(result.error ?? "Registration failed.");
       return;
     }
 
