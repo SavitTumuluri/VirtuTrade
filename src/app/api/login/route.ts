@@ -1,11 +1,10 @@
+
 import { NextResponse } from "next/server";
 
 import * as bcrypt from "bcryptjs";
 
 import { pool } from "@/lib/db";
-
 import { signSession, type SessionPayload } from "@/lib/jwt";
-
 
 export async function POST(req: Request) {
   const { email, password, remember } = await req.json();
