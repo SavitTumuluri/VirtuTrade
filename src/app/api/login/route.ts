@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import * as bcrypt from "bcryptjs";
-import { signSession, type SessionPayload } from "@/lib/jwt";
-import { pool } from "@/lib/db";
 
+import { pool } from "@/lib/db";
+import { signSession, type SessionPayload } from "@/lib/jwt";
 
 export async function POST(req: Request) {
   const { email, password, remember } = await req.json();
@@ -23,9 +23,8 @@ export async function POST(req: Request) {
     }
 
     const user = rows[0];
-
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) {
+    const ok = await bcrypt.compare(password, user.password_hash);
+    if (!ok) {
       return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
 

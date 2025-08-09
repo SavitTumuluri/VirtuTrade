@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -22,49 +23,34 @@ const FormSchema = z
 export function RegisterForm() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
+    defaultValues: { email: "", password: "", confirmPassword: "" },
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    /*toast("You submitted the following values", {
-      description: (
-        <pre className="mt-2 w-[320px] rounded-md bg-neutral-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    });*/
-
     const t = toast.loading("Creating your account...");
-
     try {
-    const res = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: data.email,
-        password: data.password,
-      }),
-    });
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: data.email, password: data.password }),
+      });
 
-    const result = await res.json();
+      const result = await res.json();
 
-    if (!res.ok) {
-      toast.error(result.error ?? "Registration failed.");
-      return;
+      if (!res.ok) {
+        toast.dismiss(t);
+        toast.error(result.error ?? "Registration failed.");
+        return;
+      }
+
+      toast.dismiss(t);
+      toast.success("Registration successful!");
+      form.reset();
+    } catch (error) {
+      toast.dismiss(t);
+      toast.error("Something went wrong. Please try again.");
+      console.error(error);
     }
-
-    toast.dismiss(t);
-    toast.success("Registration successful!");
-
-    form.reset();
-  } catch (error) {
-    toast.error("Something went wrong. Please try again.");
-    console.error(error);
-  }
   };
 
   return (
@@ -103,13 +89,7 @@ export function RegisterForm() {
             <FormItem>
               <FormLabel>Confirm Password</FormLabel>
               <FormControl>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  autoComplete="new-password"
-                  {...field}
-                />
+                <Input id="confirmPassword" type="password" placeholder="••••••••" autoComplete="new-password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

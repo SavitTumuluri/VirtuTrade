@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 
-const secret = new TextEncoder().encode(process.env.JWT_SECRET || "dev-secret-change-me");
+const secret = new TextEncoder().encode(process.env.JWT_SECRET ?? "dev-secret-change-me");
 
 export type SessionPayload = JWTPayload & {
   sub: string;
@@ -9,11 +9,7 @@ export type SessionPayload = JWTPayload & {
 };
 
 export async function signSession(payload: SessionPayload, expiresIn: string) {
-  return new SignJWT(payload)
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime(expiresIn)
-    .sign(secret);
+  return new SignJWT(payload).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime(expiresIn).sign(secret);
 }
 
 export async function verifySession<T extends JWTPayload = SessionPayload>(token: string) {
