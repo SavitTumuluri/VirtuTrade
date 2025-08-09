@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
 import * as bcrypt from "bcryptjs";
+import { NextResponse } from "next/server";
 
 import { pool } from "@/lib/db";
-import { signSession, type SessionPayload } from "@/lib/jwt";
+import { signSession } from "@/lib/jwt";
+import type { SessionPayload } from "@/lib/jwt";
 
 export async function POST(req: Request) {
   const { email, password, remember } = await req.json();
