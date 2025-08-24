@@ -7,20 +7,47 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { StockData } from "@/types/stock";
 
 import { StockContext } from "./stock-provider";
 
 export default function TradeForm() {
   const context = useContext(StockContext);
-
   if (!context) {
     throw new Error("Must be used within a StockProvider");
   }
   const { searchTerm, data } = context;
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    alert("hello world");
+
+    const formData = new FormData(e.currentTarget);
+
+    const symbol = formData.get("symbol");
+    const purchase = formData.get("purchase");
+    const sell = formData.get("sell");
+    const res = await fetch(`/api/stock?ticker=${symbol}&date=${purchase}`);
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch: ${res.status}`);
+    }
+
+    const result: StockData[] = (await res.json()) as StockData[];
+    const purchasePrice = result[0].close;
+
+    //
+    const res2 = await fetch(`/api/stock?ticker=${symbol}&date=${sell}`);
+
+    if (!res2.ok) {
+      throw new Error(`Failed to fetch: ${res.status}`);
+    }
+
+    const result2: StockData[] = (await res2.json()) as StockData[];
+    const purchasePrice2 = result2[0].close;
+
+    console.log(purchasePrice2);
+    console.log(purchasePrice);
+    alert(`Your profit would be ${purchasePrice2 - purchasePrice}`);
   }
 
   return (
