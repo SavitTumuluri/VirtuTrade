@@ -1,3 +1,5 @@
+import { spec } from "node:test/reporters";
+
 import { NextResponse } from "next/server";
 
 const path: string = `https://api.tiingo.com/`;
@@ -20,10 +22,22 @@ export async function GET(req: Request) {
   }
   const { searchParams } = new URL(req.url);
   const ticker = searchParams.get("ticker");
+  const specificDate = searchParams.get("date");
 
-  const ourPath: string =
-    path +
-    `tiingo/daily/${ticker}/prices?startDate=${getTMinus90()}&endDate=${new Date().toISOString().split("T")[0]}&token=${process.env.API_KEY}`; // NOTE: bad tickers (e.g. nonexistent) will exhaust rate limit as well.
+  let ourPath: string;
+  if (!specificDate) {
+    ourPath =
+      path +
+      `tiingo/daily/${ticker}/prices?startDate=${getTMinus90()}&endDate=${new Date().toISOString().split("T")[0]}&token=${process.env.API_KEY}`;
+  } else {
+    const specificDateParam = new Date(specificDate);
+    const v2 = new Date(specificDateParam);
+    v2.setDate(v2.getDate() - 7);
+    ourPath =
+      path +
+      `tiingo/daily/${ticker}/prices?startDate=${v2.toISOString().split("T")[0]}&endDate=${specificDateParam.toISOString().split("T")[0]}&token=${process.env.API_KEY}`;
+    console.log(ourPath);
+  }
   const result = await fetch(ourPath);
   if (!result.ok) {
     return NextResponse.json({ error: "Failed to fetch external API" }, { status: 500 });
