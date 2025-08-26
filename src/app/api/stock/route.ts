@@ -12,6 +12,7 @@ function getTMinus90(): string {
   return tMinus90.toISOString().split("T")[0];
 }
 
+// eslint-disable-next-line complexity
 export async function GET(req: Request) {
   // rate limit needed.. and dictionary for caching possibly.
   if (process.env.USE_MOCK_STOCK_DATA === "true") {

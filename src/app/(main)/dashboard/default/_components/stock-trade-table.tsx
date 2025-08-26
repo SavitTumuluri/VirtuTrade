@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -49,7 +50,10 @@ const loadState = (): PersistState | null => {
   }
 };
 const saveState = (s: PersistState) => {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch {}
+  try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch (err) {
+    // eslint-disable-next-line no-console
+    console.debug("saveState failed", err);
+  }
 };
 
 // --- NEW: fetch current price via our API ---
@@ -91,6 +95,7 @@ export default function StockTradeTable() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // eslint-disable-next-line complexity
   function placeOrder() {
     setErr(null);
     const s = cap(symbol);
@@ -110,7 +115,7 @@ export default function StockTradeTable() {
     const t = now();
     const order: Order = { id: uid(), symbol: s, side, qty: q, price: p, ts: t };
 
-    let next: Position = { ...pos, symbol: s, lastPrice: p, lastTradeTs: t };
+    const next: Position = { ...pos, symbol: s, lastPrice: p, lastTradeTs: t };
     if (side === "BUY") {
       const newQty = pos.qty + q;
       const newAvg = calcNewAvgCost(pos.qty, pos.avgCost, q, p);
@@ -133,7 +138,7 @@ export default function StockTradeTable() {
     setPrice("");
   }
 
-  // --- NEW: quick order at market price
+  // eslint-disable-next-line complexity
   async function quickOrder(doSide: Side, s: string, q: number) {
     setErr(null);
     setBusy(true);
@@ -150,7 +155,7 @@ export default function StockTradeTable() {
       const t = now();
       const order: Order = { id: uid(), symbol, side: doSide, qty: q, price, ts: t };
 
-      let next: Position = { ...pos, symbol, lastPrice: price, lastTradeTs: t };
+      const next: Position = { ...pos, symbol, lastPrice: price, lastTradeTs: t };
       if (doSide === "BUY") {
         const newQty = pos.qty + q;
         const newAvg = calcNewAvgCost(pos.qty, pos.avgCost, q, price);

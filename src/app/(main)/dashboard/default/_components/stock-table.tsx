@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useContext, useState } from "react";
+
 import { StockContext } from "./stock-provider";
 
 export default function StockTable() {
