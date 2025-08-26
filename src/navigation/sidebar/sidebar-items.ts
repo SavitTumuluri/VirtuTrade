@@ -15,6 +15,7 @@ import {
   Banknote,
   Gauge,
   GraduationCap,
+  TableProperties,
   type LucideIcon,
 } from "lucide-react";
 
@@ -49,7 +50,7 @@ export const sidebarItems: NavGroup[] = [
     label: "Dashboards",
     items: [
       {
-        title: "Default",
+        title: "Home",
         url: "/dashboard/default",
         icon: LayoutDashboard,
       },
@@ -64,12 +65,24 @@ export const sidebarItems: NavGroup[] = [
         url: "/auth",
         icon: Fingerprint,
         subItems: [
-          { title: "Login v1", url: "/auth/v1/login", newTab: true },
-          { title: "Login v2", url: "/auth/v2/login", newTab: true },
-          { title: "Register v1", url: "/auth/v1/register", newTab: true },
-          { title: "Register v2", url: "/auth/v2/register", newTab: true },
+          { title: "Login", url: "/auth/v1/login", newTab: true },
+          //{ title: "Login v2", url: "/auth/v2/login", newTab: true },
+          { title: "Register", url: "/auth/v1/register", newTab: true },
+          //{ title: "Register v2", url: "/auth/v2/register", newTab: true },
         ],
       },
     ],
   },
+/*  {
+    id: 1,
+    label: "Dashboards",
+    items: [
+      {
+        title: "Buy/Sell",
+        url: "/buy_sell",
+        icon: TableProperties,
+      },
+    ],
+  },
+  */
 ];
