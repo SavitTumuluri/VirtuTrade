@@ -48,10 +48,16 @@ const loadState = (): PersistState | null => {
     return null;
   }
 };
-
 const saveState = (s: PersistState) => {
   try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch {}
 };
+
+// --- NEW: fetch current price via our API ---
+async function fetchMarketPrice(symbol: string): Promise<{ price: number; asOf?: string }> {
+  const res = await fetch(`/api/stock?ticker=${encodeURIComponent(symbol)}&mode=latest`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch latest price");
+  return res.json();
+}
 
 // --- Demo Component ---
 export default function StockTradeTable() {
@@ -83,6 +89,7 @@ export default function StockTradeTable() {
   const [qty, setQty] = useState<number | "">("");
   const [price, setPrice] = useState<number | "">("");
   const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   function placeOrder() {
     setErr(null);
@@ -126,13 +133,54 @@ export default function StockTradeTable() {
     setPrice("");
   }
 
+  // --- NEW: quick order at market price
+  async function quickOrder(doSide: Side, s: string, q: number) {
+    setErr(null);
+    setBusy(true);
+    try {
+      const symbol = cap(s);
+      if (!symbol) throw new Error("Missing symbol");
+
+      const pos: Position = positions[symbol] ?? { symbol, qty: 0, avgCost: 0, realizedPnL: 0 };
+      if (doSide === "SELL" && q > pos.qty) {
+        throw new Error(`Cannot sell ${q} shares. You hold ${pos.qty}.`);
+      }
+
+      const { price } = await fetchMarketPrice(symbol);
+      const t = now();
+      const order: Order = { id: uid(), symbol, side: doSide, qty: q, price, ts: t };
+
+      let next: Position = { ...pos, symbol, lastPrice: price, lastTradeTs: t };
+      if (doSide === "BUY") {
+        const newQty = pos.qty + q;
+        const newAvg = calcNewAvgCost(pos.qty, pos.avgCost, q, price);
+        next.qty = newQty;
+        next.avgCost = newAvg;
+      } else {
+        const newQty = pos.qty - q;
+        const realized = (price - pos.avgCost) * q;
+        next.qty = newQty;
+        next.realizedPnL = (pos.realizedPnL || 0) + realized;
+        if (newQty === 0) next.avgCost = 0;
+      }
+
+      setOrders((o) => [order, ...o]);
+      setPositions((prev) => ({ ...prev, [symbol]: next }));
+    } catch (e: any) {
+      setErr(e?.message || "Quick order failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const positionRows = useMemo(() => Object.values(positions).sort((a,b) => a.symbol.localeCompare(b.symbol)), [positions]);
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">Buy / Sell Stocks</h1>
+
       {/* Trade ticket */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end rounded-2xl p-4 border shadow-sm bg-white">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end rounded-2xl p-4 border shadow-sm bg-white">
         <div className="flex flex-col">
           <label className="text-sm text-gray-600">Symbol</label>
           <input
@@ -177,15 +225,25 @@ export default function StockTradeTable() {
           onClick={placeOrder}
           className="h-10 md:h-11 rounded-xl font-medium shadow-sm bg-black text-white hover:opacity-90"
         >
-          Submit Order
+          Submit Limit Order
         </button>
-        {err && <p className="md:col-span-5 text-sm text-red-600">{err}</p>}
+
+        <button
+          disabled={!symbol || busy}
+          onClick={() => quickOrder(side, symbol, Number(qty) || 1)}
+          className="h-10 md:h-11 rounded-xl font-medium border hover:bg-gray-50 disabled:opacity-50"
+          title={`Uses live price from API to ${side.toLowerCase()}`}
+        >
+          {busy ? "Working..." : `Quick ${side === "BUY" ? "Buy" : "Sell"}`}
+        </button>
+
+        {err && <p className="md:col-span-6 text-sm text-red-600">{err}</p>}
       </div>
 
       {/* Positions Table */}
       <section className="mt-8">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xl font-semibold">Positions</h2>
+          <h2 className="text-xl font-semibold">Current Stock Holdings</h2>
           <small className="text-gray-500">Data persists in your browser (localStorage).</small>
         </div>
         <div className="overflow-x-auto rounded-2xl border bg-white shadow-sm">
@@ -223,20 +281,28 @@ export default function StockTradeTable() {
                     <td className={`px-4 py-3 ${unreal > 0 ? "text-green-600" : unreal < 0 ? "text-red-600" : ""}`}>{money(unreal)}</td>
                     <td className={`px-4 py-3 ${p.realizedPnL > 0 ? "text-green-600" : p.realizedPnL < 0 ? "text-red-600" : ""}`}>{money(p.realizedPnL)}</td>
                     <td className="px-4 py-3">{p.lastTradeTs ? new Date(p.lastTradeTs).toLocaleString() : "—"}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 space-x-2">
+                      {/* NEW: Quick Buy 1 @ Mkt for this symbol */}
                       <button
-                        className="px-3 py-1 rounded-lg border hover:bg-gray-50 mr-2"
-                        onClick={() => {
-                          if (!p.lastPrice) return;
-                          if (p.qty <= 0) return;
-                          setSymbol(p.symbol);
-                          setSide("SELL");
-                          setQty(1);
-                          setPrice(p.lastPrice);
-                        }}
+                        disabled={busy}
+                        className="px-3 py-1 rounded-lg border hover:bg-gray-50"
+                        onClick={() => quickOrder("BUY", p.symbol, 1)}
+                        title="Buy 1 share at current API price"
                       >
-                        Quick Sell 1
+                        {busy ? "..." : "Quick Buy 1 @ Mkt"}
                       </button>
+
+                      {/* UPDATED: Quick Sell 1 @ Mkt using live price */}
+                      <button
+                        disabled={busy || p.qty <= 0}
+                        className="px-3 py-1 rounded-lg border hover:bg-gray-50"
+                        onClick={() => quickOrder("SELL", p.symbol, 1)}
+                        title="Sell 1 share at current API price"
+                      >
+                        {busy ? "..." : "Quick Sell 1 @ Mkt"}
+                      </button>
+
+                      {/* Existing actions */}
                       <button
                         className="px-3 py-1 rounded-lg border hover:bg-gray-50"
                         onClick={() => {
@@ -259,7 +325,7 @@ export default function StockTradeTable() {
         </div>
       </section>
 
-      {/* Orders Table */}
+      {/* Orders Table (unchanged) */}
       <section className="mt-10">
         <h2 className="text-xl font-semibold mb-2">Order History</h2>
         <div className="overflow-x-auto rounded-2xl border bg-white shadow-sm">
@@ -294,10 +360,6 @@ export default function StockTradeTable() {
           </table>
         </div>
       </section>
-
-      <footer className="mt-8 text-xs text-gray-500">
-        * This is a local demo. Prices are whatever you enter; no brokerage or real market data.
-      </footer>
     </div>
   );
 }
