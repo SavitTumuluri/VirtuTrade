@@ -10,7 +10,6 @@ export default function Page() {
       <StockProvider>
         <ChartAreaInteractive />
         <InputForm />
-        <StockTable />
       </StockProvider>
       <StockTradeTable />
     </div>
