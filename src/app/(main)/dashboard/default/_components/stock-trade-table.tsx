@@ -172,7 +172,7 @@ export default function StockTradeTable() {
       setOrders((o) => [order, ...o]);
       setPositions((prev) => ({ ...prev, [symbol]: next }));
     } catch (e: any) {
-      setErr(e?.message || "Quick order failed");
+      setErr(e?.message ?? "Quick order failed");
     } finally {
       setBusy(false);
     }

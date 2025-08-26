@@ -1,6 +1,6 @@
 export interface StockData {
   date: string; // ISO 8601 format
-  //close: number;
+  // close: number;
   high: number;
   low: number;
   open: number;
@@ -15,6 +15,6 @@ export interface StockData {
   symbol: string;
   name: string;
   price: number;
-  //date?: string;
+  // date?: string;
   close?: number;
 } // If we use intraday prices from polygon we'll need to convert.
