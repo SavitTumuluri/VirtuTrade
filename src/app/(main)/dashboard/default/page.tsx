@@ -2,6 +2,8 @@ import { ChartAreaInteractive } from "./_components/chart-area-interactive";
 import { InputForm } from "./_components/form";
 import { StockProvider } from "./_components/stock-provider";
 import { VolumeGraph } from "./_components/volume-chart";
+import StockTable from "./_components/stock-table";
+import StockTradeTable from "./_components/stock-trade-table";
 
 export default function Page() {
   return (
@@ -11,6 +13,7 @@ export default function Page() {
         <VolumeGraph />
         <InputForm />
       </StockProvider>
+      <StockTradeTable />
     </div>
   );
 }
