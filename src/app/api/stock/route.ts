@@ -20,15 +20,55 @@ export async function GET(req: Request) {
   }
   const { searchParams } = new URL(req.url);
   const ticker = searchParams.get("ticker");
+  const mode = searchParams.get("mode");
 
-  const ourPath: string =
-    path +
-    `tiingo/daily/${ticker}/prices?startDate=${getTMinus90()}&endDate=${new Date().toISOString().split("T")[0]}&token=${process.env.API_KEY}`; // NOTE: bad tickers (e.g. nonexistent) will exhaust rate limit as well.
-  const result = await fetch(ourPath);
-  if (!result.ok) {
-    return NextResponse.json({ error: "Failed to fetch external API" }, { status: 500 });
+  if (!ticker) {
+    return NextResponse.json({ error: "Missing ticker" }, { status: 400 });
   }
-  const data = await result.json();
 
-  return NextResponse.json(data);
+  // Mock path for both modes
+  if (process.env.USE_MOCK_STOCK_DATA === "true") {
+    const arr = JSON.parse(fakeData) as Array<{ date: string; close: number }>;
+
+    if (mode === "latest") {
+      const last = arr[arr.length - 1];
+      return NextResponse.json({ price: last.close, asOf: last.date, mock: true });
+    }
+
+    // historical (unchanged)
+    return NextResponse.json(arr);
+  }
+
+  try {
+    if (mode === "latest") {
+      // Current (most recent) price (per your endpoint)
+      const url = `${path}tiingo/daily/${encodeURIComponent(ticker)}/prices?token=${process.env.API_KEY}`;
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) {
+        return NextResponse.json({ error: "Failed to fetch external API (latest)" }, { status: 500 });
+      }
+      const arr = await r.json(); // usually an array with 1 most-recent bar
+      const bar = Array.isArray(arr) && arr.length ? arr[0] : null;
+      if (!bar || typeof bar.close !== "number") {
+        return NextResponse.json({ error: "Malformed latest price response" }, { status: 502 });
+      }
+      return NextResponse.json({ price: bar.close, asOf: bar.date });
+    }
+
+    // Historical (unchanged)
+    const url =
+      `${path}tiingo/daily/${encodeURIComponent(ticker)}/prices` +
+      `?startDate=${getTMinus90()}` +
+      `&endDate=${new Date().toISOString().split("T")[0]}` +
+      `&token=${process.env.API_KEY}`;
+
+    const result = await fetch(url);
+    if (!result.ok) {
+      return NextResponse.json({ error: "Failed to fetch external API" }, { status: 500 });
+    }
+    const data = await result.json();
+    return NextResponse.json(data);
+  } catch (e) {
+    return NextResponse.json({ error: "Unexpected error", details: String(e) }, { status: 500 });
+  }
 }
