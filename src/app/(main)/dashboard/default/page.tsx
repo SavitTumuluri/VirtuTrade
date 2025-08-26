@@ -3,7 +3,7 @@ import { InputForm } from "./_components/form";
 import { StockProvider } from "./_components/stock-provider";
 import StockTable from "./_components/stock-table";
 import StockTradeTable from "./_components/stock-trade-table";
-import { VolumeGraph } from "./_components/volume-chart"; 
+import { VolumeGraph } from "./_components/volume-chart";
 
 export default function Page() {
   return (
