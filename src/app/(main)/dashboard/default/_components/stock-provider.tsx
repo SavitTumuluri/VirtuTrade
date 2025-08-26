@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useState } from "react";
+
 import { StockData } from "@/types/stock";
 
 type Transaction = {
