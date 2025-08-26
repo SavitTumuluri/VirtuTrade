@@ -272,6 +272,7 @@ export default function StockTradeTable() {
                   <td className="px-4 py-6 text-gray-500" colSpan={9}>No positions yet. Place a trade above.</td>
                 </tr>
               )}
+              {/* eslint-disable-next-line complexity */}
               {positionRows.map((p) => {
                 const last = p.lastPrice ?? 0;
                 const mv = (p.qty || 0) * last;
