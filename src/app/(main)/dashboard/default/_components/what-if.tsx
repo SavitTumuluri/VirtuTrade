@@ -26,6 +26,8 @@ export default function TradeForm() {
     const formData = new FormData(e.currentTarget);
 
     const symbol = formData.get("symbol");
+    const rawAmount = formData.get("amount");
+    const amount = rawAmount ? Number(rawAmount) : 0;
     const purchase = formData.get("purchase");
     const sell = formData.get("sell");
     const res = await fetch(`/api/stock?ticker=${symbol}&date=${purchase}`);
@@ -35,7 +37,7 @@ export default function TradeForm() {
     }
 
     const result: StockData[] = (await res.json()) as StockData[];
-    const purchasePrice = result[0].close;
+    const purchasePrice = result[0].close * amount;
 
     //
     const res2 = await fetch(`/api/stock?ticker=${symbol}&date=${sell}`);
@@ -45,7 +47,7 @@ export default function TradeForm() {
     }
 
     const result2: StockData[] = (await res2.json()) as StockData[];
-    const purchasePrice2 = result2[0].close;
+    const purchasePrice2 = result2[0].close * amount;
 
     const profit = purchasePrice2 - purchasePrice;
     const money = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(profit);
@@ -67,6 +69,11 @@ export default function TradeForm() {
           <div className="grid gap-2">
             <Label htmlFor="symbol">Stock symbol</Label>
             <Input id="symbol" name="symbol" placeholder="AAPL" />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="symbol">Amount of Stock</Label>
+            <Input id="amount" name="amount" placeholder="1234" />
           </div>
 
           <div className="grid gap-2">
