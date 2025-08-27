@@ -3,6 +3,8 @@
 import * as React from "react";
 import { useContext } from "react";
 
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -45,9 +47,13 @@ export default function TradeForm() {
     const result2: StockData[] = (await res2.json()) as StockData[];
     const purchasePrice2 = result2[0].close;
 
-    console.log(purchasePrice2);
-    console.log(purchasePrice);
-    alert(`Your profit would be ${purchasePrice2 - purchasePrice}`);
+    const profit = purchasePrice2 - purchasePrice;
+    const money = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(profit);
+    if (profit >= 0) {
+      toast.success(`Projected profit: ${money}`, { description: `${purchasePrice2} - ${purchasePrice}` });
+    } else {
+      toast.error(`Projected loss: ${money}`, { description: `${purchasePrice2} - ${purchasePrice}` });
+    }
   }
 
   return (
