@@ -32,6 +32,7 @@ async function getStockData(ticker: string) {
     price: item.price ?? item.lastPrice,
     date: item.date,
     close: item.close,
+    volume: item.volume,
   }));
   return result;
 }
