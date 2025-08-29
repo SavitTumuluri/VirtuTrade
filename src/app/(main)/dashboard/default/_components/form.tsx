@@ -32,6 +32,7 @@ async function getStockData(ticker: string) {
     price: item.price ?? item.lastPrice,
     date: item.date,
     close: item.close,
+    volume: item.volume,
   }));
   return result;
 }
@@ -62,6 +63,7 @@ export function InputForm() {
     setSearchTerm(data.stock);
     const result: StockData[] = await getStockData(data.stock);
     console.log(`Getting stock data for ${data.stock}`);
+    console.log(result);
     setData(result);
   }
 
