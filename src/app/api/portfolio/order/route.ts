@@ -16,13 +16,54 @@ type Body = {
 
 async function fetchMarketPriceViaSelf(req: Request, symbol: string): Promise<number> {
   const origin = new URL(req.url).origin;
-  const url = `${origin}/api/stock?ticker=${encodeURIComponent(symbol)}&mode=latest`;
-  const r = await fetch(url, { cache: "no-store" });
-  if (!r.ok) throw new Error("Failed to fetch latest price");
-  const j = (await r.json()) as { price?: unknown };
-  const price = Number(j.price);
-  if (!price || !Number.isFinite(price)) throw new Error("Malformed latest price");
-  return price;
+
+  // Try both query keys and both with/without mode=latest
+  const urls = [
+    `${origin}/api/stock?ticker=${encodeURIComponent(symbol)}&mode=latest`,
+    `${origin}/api/stock?symbol=${encodeURIComponent(symbol)}&mode=latest`,
+    `${origin}/api/stock?ticker=${encodeURIComponent(symbol)}`,
+    `${origin}/api/stock?symbol=${encodeURIComponent(symbol)}`,
+  ];
+
+  // Helper to extract a usable number from various shapes
+  const pickNumber = (j: any): number | undefined => {
+    if (typeof j === "number") return j;
+    if (j && typeof j === "object") {
+      // common field names
+      const candidates = [
+        j.price,
+        j.last,
+        j.close,
+        j.c,             // e.g. polygon "current price"
+        j.latest,
+        j.value,
+      ];
+      for (const v of candidates) {
+        const n = Number(v);
+        if (Number.isFinite(n) && n > 0) return n;
+      }
+      // arrays like [{ price: ... }]
+      if (Array.isArray(j) && j.length) {
+        const n = Number((j[0] as any)?.price ?? (j[0] as any)?.close);
+        if (Number.isFinite(n) && n > 0) return n;
+      }
+    }
+    return undefined;
+  };
+
+  for (const url of urls) {
+    try {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) continue;
+      const j = await r.json();
+      const price = pickNumber(j);
+      if (price) return price;
+    } catch {
+      // try the next variant
+    }
+  }
+
+  throw new Error("Market price unavailable");
 }
 
 function validateBody(
