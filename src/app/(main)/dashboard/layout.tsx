@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+
 import { cookies } from "next/headers";
 
 import { AppSidebar } from "@/app/(main)/dashboard/_components/sidebar/app-sidebar";
