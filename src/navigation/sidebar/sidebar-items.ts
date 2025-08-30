@@ -54,17 +54,11 @@ export const sidebarItems: NavGroup[] = [
         url: "/dashboard/default",
         icon: LayoutDashboard,
       },
-       {
+      {
         title: "Finance",
         url: "/dashboard/finance",
         icon: Banknote,
-      }
-    ],
-  },
-  {
-    id: 2,
-    label: "Pages",
-    items: [
+      },
       {
         title: "Authentication",
         url: "/auth",
@@ -78,16 +72,4 @@ export const sidebarItems: NavGroup[] = [
       },
     ],
   },
-  /*  {
-    id: 1,
-    label: "Dashboards",
-    items: [
-      {
-        title: "Buy/Sell",
-        url: "/buy_sell",
-        icon: TableProperties,
-      },
-    ],
-  },
-  */
 ];

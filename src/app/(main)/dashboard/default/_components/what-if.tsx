@@ -59,40 +59,38 @@ export default function TradeForm() {
   }
 
   return (
-    <Card className="max-w-md shadow-lg">
-      <CardHeader>
-        <CardTitle>what If</CardTitle>
-      </CardHeader>
+    <div className="w-full max-w-6xl">
+      <h2 className="mb-4 text-xl font-bold">What If</h2>
 
-      <form onSubmit={onSubmit} className="contents">
-        <CardContent className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="symbol">Stock symbol</Label>
-            <Input id="symbol" name="symbol" placeholder="AAPL" />
-          </div>
+      <Card>
+        <form onSubmit={onSubmit} className="contents">
+          <CardContent className="flex items-end gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="symbol">Stock Symbol</Label>
+              <Input id="symbol" name="symbol" placeholder="AAPL" />
+            </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="symbol">Amount of Stock</Label>
-            <Input id="amount" name="amount" placeholder="1234" />
-          </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="amount">Amount of Stock</Label>
+              <Input id="amount" name="amount" placeholder="1234" />
+            </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="purchase">Purchase date</Label>
-            <Input id="purchase" name="purchase" type="date" />
-          </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="purchase">Purchase Date</Label>
+              <Input id="purchase" name="purchase" type="date" />
+            </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="sell">Sell date</Label>
-            <Input id="sell" name="sell" type="date" />
-          </div>
-        </CardContent>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="sell">Sell Date</Label>
+              <Input id="sell" name="sell" type="date" />
+            </div>
 
-        <CardFooter>
-          <Button type="submit" className="w-full">
-            Submit
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+            <Button type="submit" className="w-xs self-end">
+              Submit
+            </Button>
+          </CardContent>
+        </form>
+      </Card>
+    </div>
   );
 }

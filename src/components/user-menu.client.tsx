@@ -92,30 +92,7 @@ export default function ClientUserMenu({ username, email }: Props) {
               <div className="truncate text-xs text-gray-500">{email}</div>
             </div>
           </div>
-
           <div className="my-2 h-px bg-gray-100" />
-
-          <button
-            onClick={() => router.push("/account")}
-            className="w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-gray-50"
-          >
-            Account
-          </button>
-          <button
-            onClick={() => router.push("/billing")}
-            className="w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-gray-50"
-          >
-            Billing
-          </button>
-          <button
-            onClick={() => router.push("/notifications")}
-            className="w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-gray-50"
-          >
-            Notifications
-          </button>
-
-          <div className="my-2 h-px bg-gray-100" />
-
           <button onClick={logout} className="w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-gray-50">
             Log out
           </button>
