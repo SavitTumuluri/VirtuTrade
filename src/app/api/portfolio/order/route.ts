@@ -25,7 +25,7 @@ async function fetchMarketPriceViaSelf(req: Request, symbol: string): Promise<nu
     `${origin}/api/stock?symbol=${encodeURIComponent(symbol)}`,
   ];
 
-  // Helper to extract a usable number from various shapes
+  /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion */
   const pickNumber = (j: any): number | undefined => {
     if (typeof j === "number") return j;
     if (j && typeof j === "object") {
@@ -34,7 +34,7 @@ async function fetchMarketPriceViaSelf(req: Request, symbol: string): Promise<nu
         j.price,
         j.last,
         j.close,
-        j.c,             // e.g. polygon "current price"
+        j.c,
         j.latest,
         j.value,
       ];
