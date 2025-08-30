@@ -60,7 +60,7 @@ export function RegisterForm() {
     } catch (error) {
       toast.dismiss(t);
       toast.error("Something went wrong. Please try again.");
-      // eslint-disable-next-line no-console
+
       console.error(error);
     }
   };
