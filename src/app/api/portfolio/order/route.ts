@@ -19,8 +19,8 @@ function resolveBaseUrl(req: Request) {
   // Prefer deployment host headers when present (Vercel / proxies)
   const h = req.headers;
   const forwardedHost = h.get("x-forwarded-host");
-  const host = forwardedHost || h.get("host") || process.env.VERCEL_URL;
-  const proto = h.get("x-forwarded-proto") || "https";
+  const host = forwardedHost ?? h.get("host") ?? process.env.VERCEL_URL;
+  const proto = h.get("x-forwarded-proto") ?? "https";
 
   if (host) return `${proto}://${host}`;
 
