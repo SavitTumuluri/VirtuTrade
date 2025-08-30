@@ -4,6 +4,7 @@ import { getAuthUser } from "@/lib/auth";
 import { pool } from "@/lib/db";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type Side = "BUY" | "SELL";
 type Body = {
@@ -14,57 +15,43 @@ type Body = {
   mode?: "limit" | "market";
 };
 
+function resolveBaseUrl(req: Request) {
+  // Prefer deployment host headers when present (Vercel / proxies)
+  const h = req.headers;
+  const forwardedHost = h.get("x-forwarded-host");
+  const host = forwardedHost || h.get("host") || process.env.VERCEL_URL;
+  const proto = h.get("x-forwarded-proto") || "https";
+
+  if (host) return `${proto}://${host}`;
+
+  // Fallback to the actual request URL origin (works locally)
+  return new URL(req.url).origin;
+}
+
 async function fetchMarketPriceViaSelf(req: Request, symbol: string): Promise<number> {
-  const origin = new URL(req.url).origin;
+  const base = resolveBaseUrl(req);
+  const url = new URL("/api/stock", base);
+  url.searchParams.set("ticker", symbol);
+  url.searchParams.set("mode", "latest");
 
-  // Try both query keys and both with/without mode=latest
-  const urls = [
-    `${origin}/api/stock?ticker=${encodeURIComponent(symbol)}&mode=latest`,
-    `${origin}/api/stock?symbol=${encodeURIComponent(symbol)}&mode=latest`,
-    `${origin}/api/stock?ticker=${encodeURIComponent(symbol)}`,
-    `${origin}/api/stock?symbol=${encodeURIComponent(symbol)}`,
-  ];
+  const r = await fetch(url.toString(), {
+    cache: "no-store",
+    // also tell Next/Vercel: never cache this
+    next: { revalidate: 0 },
+    headers: { "x-internal-request": "portfolio-order" },
+  });
 
-  /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion */
-  const pickNumber = (j: any): number | undefined => {
-    if (typeof j === "number") return j;
-    if (j && typeof j === "object") {
-      // common field names
-      const candidates = [
-        j.price,
-        j.last,
-        j.close,
-        j.c,
-        j.latest,
-        j.value,
-      ];
-      for (const v of candidates) {
-        const n = Number(v);
-        if (Number.isFinite(n) && n > 0) return n;
-      }
-      // arrays like [{ price: ... }]
-      if (Array.isArray(j) && j.length) {
-        const n = Number((j[0] as any)?.price ?? (j[0] as any)?.close);
-        if (Number.isFinite(n) && n > 0) return n;
-      }
-    }
-    return undefined;
-  };
-
-  for (const url of urls) {
-    try {
-      const r = await fetch(url, { cache: "no-store" });
-      if (!r.ok) continue;
-      const j = await r.json();
-      const price = pickNumber(j);
-      if (price) return price;
-    } catch {
-      // try the next variant
-    }
+  if (!r.ok) {
+    const body = await r.text().catch(() => "");
+    throw new Error(`SELF_FETCH_FAILED ${r.status} ${body.slice(0, 120)}`);
   }
 
-  throw new Error("Market price unavailable");
+  const j = (await r.json()) as { price?: unknown };
+  const price = Number(j?.price);
+  if (!price || !Number.isFinite(price)) throw new Error("Malformed latest price");
+  return price;
 }
+
 
 function validateBody(
   b: Body,
@@ -207,14 +194,19 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ ok: true, ...result });
-  } catch (e) {
-    const msg = String(e ?? "");
-    if (msg.startsWith("Error: INSUFFICIENT_QTY:")) {
-      const held = Number(msg.split(":")[2] ?? "0");
-      return NextResponse.json({ error: `Cannot sell ${qty}. You hold ${held}.` }, { status: 400 });
-    }
-
-    console.error(e);
-    return NextResponse.json({ error: "Order failed" }, { status: 500 });
+} catch (e) {
+  const msg = String(e ?? "");
+  if (msg.startsWith("Error: INSUFFICIENT_QTY:")) {
+    const held = Number(msg.split(":")[2] ?? "0");
+    return NextResponse.json({ error: `Cannot sell ${qty}. You hold ${held}.` }, { status: 400 });
   }
+  if (msg.includes("SELF_FETCH_FAILED")) {
+    console.error("Order failed while getting latest price:", msg);
+    return NextResponse.json({ error: "Price service unavailable" }, { status: 502 });
+  }
+
+  console.error("Order failed:", e);
+  return NextResponse.json({ error: "Order failed" }, { status: 500 });
+}
+
 }
