@@ -9,9 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
+const UsernameSchema = z
+  .string()
+  .trim()
+  .min(3, { message: "Username must be at least 3 characters." })
+  .max(30, { message: "Username must be at most 30 characters." })
+  .regex(/^[a-zA-Z0-9_]+$/, { message: "Only letters, numbers, and underscores are allowed." });
+
 const FormSchema = z
   .object({
-    email: z.string().email({ message: "Please enter a valid email address." }),
+    username: UsernameSchema,
+    email: z.string().email({ message: "Please enter a valid email address." }).transform((v) => v.trim()),
     password: z.string().min(6, { message: "Password must be at least 6 characters." }),
     confirmPassword: z.string().min(6, { message: "Confirm Password must be at least 6 characters." }),
   })
@@ -23,7 +31,7 @@ const FormSchema = z
 export function RegisterForm() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: { email: "", password: "", confirmPassword: "" },
+    defaultValues: { username: "", email: "", password: "", confirmPassword: "" },
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
@@ -32,7 +40,7 @@ export function RegisterForm() {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: data.email, password: data.password }),
+        body: JSON.stringify({ username: data.username, email: data.email, password: data.password }),
       });
 
       const result = await res.json();
@@ -44,11 +52,12 @@ export function RegisterForm() {
       }
 
       toast.dismiss(t);
-      toast.success("Registration successful!");
+      toast.success("Registration successful! You can now log in.");
       form.reset();
     } catch (error) {
       toast.dismiss(t);
       toast.error("Something went wrong. Please try again.");
+      // eslint-disable-next-line no-console
       console.error(error);
     }
   };
@@ -56,6 +65,19 @@ export function RegisterForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input id="username" type="text" placeholder="name" autoComplete="username" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="email"
@@ -89,7 +111,13 @@ export function RegisterForm() {
             <FormItem>
               <FormLabel>Confirm Password</FormLabel>
               <FormControl>
-                <Input id="confirmPassword" type="password" placeholder="••••••••" autoComplete="new-password" {...field} />
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

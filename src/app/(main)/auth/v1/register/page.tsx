@@ -1,7 +1,5 @@
 import Link from "next/link";
-
 import { Command } from "lucide-react";
-
 import { RegisterForm } from "../../_components/register-form";
 import { GoogleButton } from "../../_components/social-auth/google-button";
 
@@ -21,7 +19,7 @@ export default function RegisterV1() {
             <GoogleButton className="w-full" variant="outline" />
             <p className="text-muted-foreground text-center text-xs">
               Already have an account?{" "}
-              <Link href="login" className="text-primary">
+              <Link href="/auth/v1/login" className="text-primary">
                 Login
               </Link>
             </p>
