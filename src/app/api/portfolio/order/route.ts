@@ -52,7 +52,6 @@ async function fetchMarketPriceViaSelf(req: Request, symbol: string): Promise<nu
   return price;
 }
 
-
 function validateBody(
   b: Body,
 ): { symbol: string; side: Side; qty: number; mode: "limit" | "market" } | { error: string } {
