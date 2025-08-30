@@ -37,8 +37,7 @@ export default function TradeForm() {
     }
 
     const result: StockData[] = (await res.json()) as StockData[];
-    const purchasePrice = result[0].close * amount;
-
+    const purchasePrice = (result[0].close ?? 0) * amount;
     //
     const res2 = await fetch(`/api/stock?ticker=${symbol}&date=${sell}`);
 
@@ -47,7 +46,7 @@ export default function TradeForm() {
     }
 
     const result2: StockData[] = (await res2.json()) as StockData[];
-    const purchasePrice2 = result2[0].close * amount;
+    const purchasePrice2 = (result2[0].close ?? 0) * amount;
 
     const profit = purchasePrice2 - purchasePrice;
     const money = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(profit);
