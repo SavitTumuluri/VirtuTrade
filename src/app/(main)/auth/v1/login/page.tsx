@@ -15,7 +15,7 @@ export default function LoginV1() {
             <div className="space-y-2">
               <h1 className="text-primary-foreground text-5xl font-light">Hello again</h1>
               <p className="text-primary-foreground/80 text-xl">Login to continue</p>
-            </div>
+            </div> 
           </div>
         </div>
       </div>

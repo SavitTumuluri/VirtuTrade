@@ -1,6 +1,7 @@
 import UserMenu from "@/components/user-menu";
-import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth";
+
+import { redirect } from "next/navigation";
 
 import { ChartAreaInteractive } from "./_components/chart-area-interactive";
 import { InputForm } from "./_components/form";
