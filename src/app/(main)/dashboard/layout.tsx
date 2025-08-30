@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { AppSidebar } from "@/app/(main)/dashboard/_components/sidebar/app-sidebar";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-
+import UserMenu from "@/components/user-menu";
 import { cn } from "@/lib/utils";
 import { getPreference } from "@/server/server-actions";
 import {
@@ -19,8 +19,6 @@ import {
 import { LayoutControls } from "./_components/sidebar/layout-controls";
 import { SearchDialog } from "./_components/sidebar/search-dialog";
 import { ThemeSwitcher } from "./_components/sidebar/theme-switcher";
-
-import UserMenu from "@/components/user-menu";
 
 export default async function Layout({ children }: Readonly<{ children: ReactNode }>) {
   const cookieStore = await cookies();

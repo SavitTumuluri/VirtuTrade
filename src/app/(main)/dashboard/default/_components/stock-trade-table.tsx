@@ -62,7 +62,7 @@ export default function StockTradeTable() {
         body: JSON.stringify({ symbol: s, side, qty: q, price: p, mode: "limit" }),
       });
       const j = await res.json();
-      if (!res.ok) throw new Error(j?.error || "Order failed");
+      if (!res.ok) throw new Error(j?.error ?? "Order failed");
       await loadAll();
       setQty(""); setPrice("");
     } catch (e: any) {
@@ -88,7 +88,7 @@ export default function StockTradeTable() {
         body: JSON.stringify({ symbol, side: doSide, qty: q, mode: "market" }),
       });
       const j = await res.json();
-      if (!res.ok) throw new Error(j?.error || "Quick order failed");
+      if (!res.ok) throw new Error(j?.error ?? "Quick order failed");
       await loadAll();
     } catch (e: any) {
       setErr(e?.message ?? "Quick order failed");
