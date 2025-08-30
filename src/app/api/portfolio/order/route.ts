@@ -1,0 +1,213 @@
+import { NextResponse } from "next/server";
+
+import { getAuthUser } from "@/lib/auth";
+import { pool } from "@/lib/db";
+
+export const runtime = "nodejs";
+
+type Side = "BUY" | "SELL";
+type Body = {
+  symbol?: string;
+  side?: string;
+  qty?: number | string;
+  price?: number | string;
+  mode?: "limit" | "market";
+};
+
+async function fetchMarketPriceViaSelf(req: Request, symbol: string): Promise<number> {
+  const origin = new URL(req.url).origin;
+
+  // Try both query keys and both with/without mode=latest
+  const urls = [
+    `${origin}/api/stock?ticker=${encodeURIComponent(symbol)}&mode=latest`,
+    `${origin}/api/stock?symbol=${encodeURIComponent(symbol)}&mode=latest`,
+    `${origin}/api/stock?ticker=${encodeURIComponent(symbol)}`,
+    `${origin}/api/stock?symbol=${encodeURIComponent(symbol)}`,
+  ];
+
+  /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion */
+  const pickNumber = (j: any): number | undefined => {
+    if (typeof j === "number") return j;
+    if (j && typeof j === "object") {
+      // common field names
+      const candidates = [j.price, j.last, j.close, j.c, j.latest, j.value];
+      for (const v of candidates) {
+        const n = Number(v);
+        if (Number.isFinite(n) && n > 0) return n;
+      }
+      // arrays like [{ price: ... }]
+      if (Array.isArray(j) && j.length) {
+        const n = Number((j[0] as any)?.price ?? (j[0] as any)?.close);
+        if (Number.isFinite(n) && n > 0) return n;
+      }
+    }
+    return undefined;
+  };
+
+  for (const url of urls) {
+    try {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) continue;
+      const j = await r.json();
+      const price = pickNumber(j);
+      if (price) return price;
+    } catch {
+      // try the next variant
+    }
+  }
+
+  throw new Error("Market price unavailable");
+}
+
+function validateBody(
+  b: Body,
+): { symbol: string; side: Side; qty: number; mode: "limit" | "market" } | { error: string } {
+  const rawSymbol = typeof b.symbol === "string" ? b.symbol : "";
+  const symbol = rawSymbol.trim().toUpperCase();
+
+  const sideStr = typeof b.side === "string" ? b.side.toUpperCase() : "";
+  const side: Side | undefined = sideStr === "BUY" || sideStr === "SELL" ? (sideStr as Side) : undefined;
+
+  const qtyNum = Number(b.qty);
+  const mode: "limit" | "market" = b.mode === "market" ? "market" : "limit";
+
+  if (!symbol) return { error: "Missing symbol" };
+  if (!side) return { error: "Bad side" };
+  if (!qtyNum || qtyNum <= 0) return { error: "Bad quantity" };
+
+  return { symbol, side, qty: qtyNum, mode };
+}
+
+function computePositionUpdate(
+  side: Side,
+  qty: number,
+  price: number,
+  current: { qty: number; avg: number; realized: number },
+) {
+  const { qty: qtyNow, avg, realized } = current;
+
+  if (side === "BUY") {
+    const newQty = qtyNow + qty;
+    const newAvg = qtyNow <= 0 ? price : (qtyNow * avg + qty * price) / (qtyNow + qty);
+    return { qtyNow: newQty, avg: newAvg, realized };
+  }
+
+  // SELL
+  const newQty = qtyNow - qty;
+  const newRealized = realized + (price - avg) * qty;
+  const newAvg = newQty === 0 ? 0 : avg;
+  return { qtyNow: newQty, avg: newAvg, realized: newRealized };
+}
+
+async function withTransaction<T>(fn: (client: import("pg").PoolClient) => Promise<T>): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await fn(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackErr) {
+      console.error("Rollback failed:", rollbackErr);
+    }
+    throw err;
+  } finally {
+    try {
+      client.release();
+    } catch (releaseErr) {
+      console.error("Client release failed:", releaseErr);
+    }
+  }
+}
+
+export async function POST(req: Request) {
+  const me = await getAuthUser();
+  if (!me) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const raw = (await req.json()) as Body;
+  const parsed = validateBody(raw);
+  if ("error" in parsed) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
+
+  const { symbol, side, qty, mode } = parsed;
+
+  try {
+    const price = mode === "market" ? await fetchMarketPriceViaSelf(req, symbol) : Number(raw.price);
+    if (!price || price <= 0) {
+      return NextResponse.json({ error: "Bad price" }, { status: 400 });
+    }
+
+    const result = await withTransaction(async (client) => {
+      // Lock existing position (if any)
+      const posRes = await client.query(
+        `
+          SELECT qty, avg_cost, realized_pnl
+          FROM positions
+          WHERE user_id = $1 AND symbol = $2
+          FOR UPDATE
+        `,
+        [me.id, symbol],
+      );
+
+      const qtyNow0 = posRes.rowCount ? Number(posRes.rows[0].qty) : 0;
+      const avg0 = posRes.rowCount ? Number(posRes.rows[0].avg_cost) : 0;
+      const realized0 = posRes.rowCount ? Number(posRes.rows[0].realized_pnl) : 0;
+
+      if (side === "SELL" && qty > qtyNow0) {
+        throw new Error(`INSUFFICIENT_QTY:${qtyNow0}`);
+      }
+
+      const { qtyNow, avg, realized } = computePositionUpdate(side, qty, price, {
+        qty: qtyNow0,
+        avg: avg0,
+        realized: realized0,
+      });
+
+      // Upsert position
+      await client.query(
+        `
+          INSERT INTO positions (user_id, symbol, qty, avg_cost, realized_pnl, last_trade_ts)
+          VALUES ($1, $2, $3, $4, $5, NOW())
+          ON CONFLICT (user_id, symbol)
+          DO UPDATE SET
+            qty = EXCLUDED.qty,
+            avg_cost = EXCLUDED.avg_cost,
+            realized_pnl = EXCLUDED.realized_pnl,
+            last_trade_ts = NOW()
+        `,
+        [me.id, symbol, qtyNow, avg, realized],
+      );
+
+      // Insert order
+      const ord = await client.query(
+        `
+          INSERT INTO orders (user_id, symbol, side, qty, price)
+          VALUES ($1, $2, $3, $4, $5)
+          RETURNING id, EXTRACT(EPOCH FROM created_at) * 1000 AS ts
+        `,
+        [me.id, symbol, side, qty, price],
+      );
+
+      return {
+        order: { id: ord.rows[0].id, symbol, side, qty, price, ts: Number(ord.rows[0].ts) },
+        position: { symbol, qty: qtyNow, avgCost: Number(avg), realizedPnL: Number(realized) },
+      };
+    });
+
+    return NextResponse.json({ ok: true, ...result });
+  } catch (e) {
+    const msg = String(e ?? "");
+    if (msg.startsWith("Error: INSUFFICIENT_QTY:")) {
+      const held = Number(msg.split(":")[2] ?? "0");
+      return NextResponse.json({ error: `Cannot sell ${qty}. You hold ${held}.` }, { status: 400 });
+    }
+
+    console.error(e);
+    return NextResponse.json({ error: "Order failed" }, { status: 500 });
+  }
+}

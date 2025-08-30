@@ -25,7 +25,15 @@ async function getStockData(ticker: string) {
     throw new Error(`Failed to fetch: ${res.status}`);
   }
 
-  const result: StockData[] = (await res.json()) as StockData[];
+  const raw = await res.json();
+  const result: StockData[] = raw.map((item: any) => ({
+    symbol: item.symbol ?? item.ticker,
+    name: item.name ?? item.company,
+    price: item.price ?? item.lastPrice,
+    date: item.date,
+    close: item.close,
+    volume: item.volume,
+  }));
   return result;
 }
 

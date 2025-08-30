@@ -11,7 +11,8 @@ export const pool = new Pool({
   },
 });
 
-pool.connect()
+pool
+  .connect()
   .then(() => {
     console.log(`Connected to database: ${process.env.PGDATABASE}`);
   })
