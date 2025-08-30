@@ -18,7 +18,7 @@ export async function GET() {
      FROM public.positions
      WHERE user_id = $1
      ORDER BY symbol ASC`,
-    [me.id]
+    [me.id],
   );
 
   const positions = rows.map((r) => ({

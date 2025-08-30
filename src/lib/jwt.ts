@@ -9,7 +9,11 @@ export type SessionPayload = JWTPayload & {
 };
 
 export async function signSession(payload: SessionPayload, expiresIn: string) {
-  return new SignJWT(payload).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime(expiresIn).sign(secret);
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(expiresIn)
+    .sign(secret);
 }
 
 export async function verifySession<T extends JWTPayload = SessionPayload>(token: string) {

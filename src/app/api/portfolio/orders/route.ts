@@ -16,7 +16,7 @@ export async function GET() {
      WHERE user_id = $1
      ORDER BY created_at DESC
      LIMIT 500`,
-    [me.id]
+    [me.id],
   );
 
   // node-postgres returns numeric fields as strings; coerce here

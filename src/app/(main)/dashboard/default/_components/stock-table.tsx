@@ -34,18 +34,10 @@ export default function StockTable() {
                   <td>{stock.name}</td>
                   <td>{stock.price}</td>
                   <td>
-                    <button
-                      onClick={() => buyStock(stock.symbol, quantity, stock.price)}
-                    >
-                      Buy
-                    </button>
+                    <button onClick={() => buyStock(stock.symbol, quantity, stock.price)}>Buy</button>
                   </td>
                   <td>
-                    <button
-                      onClick={() => sellStock(stock.symbol, quantity, stock.price)}
-                    >
-                      Sell
-                    </button>
+                    <button onClick={() => sellStock(stock.symbol, quantity, stock.price)}>Sell</button>
                   </td>
                 </tr>
               ))}

@@ -30,10 +30,7 @@ export function StockProvider({ children }: React.PropsWithChildren) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const buyStock = (symbol: string, quantity: number, price: number) => {
-    setTransactions((prev) => [
-      ...prev,
-      { type: "buy", symbol, quantity, price, timestamp: new Date().toISOString() },
-    ]);
+    setTransactions((prev) => [...prev, { type: "buy", symbol, quantity, price, timestamp: new Date().toISOString() }]);
   };
 
   const sellStock = (symbol: string, quantity: number, price: number) => {

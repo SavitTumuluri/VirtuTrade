@@ -11,10 +11,24 @@ function hashToIdx(s: string, mod: number) {
   return Math.abs(h) % mod;
 }
 const COLORS = [
-  "bg-rose-500","bg-pink-500","bg-fuchsia-500","bg-purple-500","bg-violet-500",
-  "bg-indigo-500","bg-blue-500","bg-sky-500","bg-cyan-500","bg-teal-500",
-  "bg-emerald-500","bg-green-500","bg-lime-500","bg-yellow-500","bg-amber-500",
-  "bg-orange-500","bg-red-500","bg-slate-500"
+  "bg-rose-500",
+  "bg-pink-500",
+  "bg-fuchsia-500",
+  "bg-purple-500",
+  "bg-violet-500",
+  "bg-indigo-500",
+  "bg-blue-500",
+  "bg-sky-500",
+  "bg-cyan-500",
+  "bg-teal-500",
+  "bg-emerald-500",
+  "bg-green-500",
+  "bg-lime-500",
+  "bg-yellow-500",
+  "bg-amber-500",
+  "bg-orange-500",
+  "bg-red-500",
+  "bg-slate-500",
 ];
 
 type Props = { username: string; email: string };
@@ -22,11 +36,12 @@ type Props = { username: string; email: string };
 export default function ClientUserMenu({ username, email }: Props) {
   const router = useRouter();
   const name = username || email?.split("@")[0] || "User";
-  const initials = name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("") || "U";
+  const initials =
+    name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((p) => p[0]?.toUpperCase() ?? "")
+      .join("") || "U";
   const color = COLORS[hashToIdx(name + email, COLORS.length)];
 
   const [open, setOpen] = React.useState(false);
@@ -60,7 +75,7 @@ export default function ClientUserMenu({ username, email }: Props) {
         className="flex h-9 w-9 items-center justify-center rounded-full border shadow-sm hover:bg-gray-50"
         aria-label="Open user menu"
       >
-        <div className={`flex h-8 w-8 items-center justify-center rounded-full text-white font-semibold ${color}`}>
+        <div className={`flex h-8 w-8 items-center justify-center rounded-full font-semibold text-white ${color}`}>
           {initials}
         </div>
       </button>
@@ -68,7 +83,9 @@ export default function ClientUserMenu({ username, email }: Props) {
       {open && (
         <div className="absolute right-0 z-50 mt-2 w-72 rounded-2xl border bg-white p-2 shadow-lg">
           <div className="flex items-center gap-3 rounded-xl p-3 hover:bg-gray-50">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-full text-white font-semibold ${color}`}>
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-full font-semibold text-white ${color}`}
+            >
               {initials}
             </div>
             <div className="min-w-0">
@@ -100,10 +117,7 @@ export default function ClientUserMenu({ username, email }: Props) {
 
           <div className="my-2 h-px bg-gray-100" />
 
-          <button
-            onClick={logout}
-            className="w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-gray-50"
-          >
+          <button onClick={logout} className="w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-gray-50">
             Log out
           </button>
         </div>

@@ -7,10 +7,10 @@ export const runtime = "nodejs";
 
 type Side = "BUY" | "SELL";
 type Body = {
-  symbol: string;
-  side: Side;
-  qty: number;
-  price?: number;
+  symbol?: string;
+  side?: string;
+  qty?: number | string;
+  price?: number | string;
   mode?: "limit" | "market";
 };
 
@@ -20,22 +20,28 @@ async function fetchMarketPriceViaSelf(req: Request, symbol: string): Promise<nu
   const r = await fetch(url, { cache: "no-store" });
   if (!r.ok) throw new Error("Failed to fetch latest price");
   const j = (await r.json()) as { price?: unknown };
-  const price = Number(j?.price);
+  const price = Number(j.price);
   if (!price || !Number.isFinite(price)) throw new Error("Malformed latest price");
   return price;
 }
 
-function validateBody(b: Body): { symbol: string; side: Side; qty: number; mode: "limit" | "market" } | { error: string } {
-  const symbol = b.symbol?.trim().toUpperCase();
-  const side = b.side;
-  const qty = Number(b.qty);
-  const mode = (b.mode ?? "limit") as "limit" | "market";
+function validateBody(
+  b: Body,
+): { symbol: string; side: Side; qty: number; mode: "limit" | "market" } | { error: string } {
+  const rawSymbol = typeof b.symbol === "string" ? b.symbol : "";
+  const symbol = rawSymbol.trim().toUpperCase();
+
+  const sideStr = typeof b.side === "string" ? b.side.toUpperCase() : "";
+  const side: Side | undefined = sideStr === "BUY" || sideStr === "SELL" ? (sideStr as Side) : undefined;
+
+  const qtyNum = Number(b.qty);
+  const mode: "limit" | "market" = b.mode === "market" ? "market" : "limit";
 
   if (!symbol) return { error: "Missing symbol" };
-  if (side !== "BUY" && side !== "SELL") return { error: "Bad side" };
-  if (!qty || qty <= 0) return { error: "Bad quantity" };
+  if (!side) return { error: "Bad side" };
+  if (!qtyNum || qtyNum <= 0) return { error: "Bad quantity" };
 
-  return { symbol, side, qty, mode };
+  return { symbol, side, qty: qtyNum, mode };
 }
 
 function computePositionUpdate(
@@ -44,7 +50,7 @@ function computePositionUpdate(
   price: number,
   current: { qty: number; avg: number; realized: number },
 ) {
-  let { qty: qtyNow, avg, realized } = current;
+  const { qty: qtyNow, avg, realized } = current;
 
   if (side === "BUY") {
     const newQty = qtyNow + qty;
@@ -70,7 +76,6 @@ async function withTransaction<T>(fn: (client: import("pg").PoolClient) => Promi
     try {
       await client.query("ROLLBACK");
     } catch (rollbackErr) {
-      // log instead of empty catch to satisfy no-empty rule
       console.error("Rollback failed:", rollbackErr);
     }
     throw err;
@@ -98,11 +103,7 @@ export async function POST(req: Request) {
   const { symbol, side, qty, mode } = parsed;
 
   try {
-    const price =
-      mode === "market"
-        ? await fetchMarketPriceViaSelf(req, symbol)
-        : Number(raw.price);
-
+    const price = mode === "market" ? await fetchMarketPriceViaSelf(req, symbol) : Number(raw.price);
     if (!price || price <= 0) {
       return NextResponse.json({ error: "Bad price" }, { status: 400 });
     }
@@ -124,7 +125,6 @@ export async function POST(req: Request) {
       const realized0 = posRes.rowCount ? Number(posRes.rows[0].realized_pnl) : 0;
 
       if (side === "SELL" && qty > qtyNow0) {
-        // Abort inside the transaction by throwing; caller will turn this into a 400
         throw new Error(`INSUFFICIENT_QTY:${qtyNow0}`);
       }
 

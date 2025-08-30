@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { Command } from "lucide-react";
 
 import { RegisterForm } from "../../_components/register-form";

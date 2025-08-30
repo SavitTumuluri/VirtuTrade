@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 
 import * as bcrypt from "bcryptjs";
@@ -15,10 +14,9 @@ export async function POST(req: Request) {
 
   const client = await pool.connect();
   try {
-    const { rows } = await client.query(
-      "SELECT id, email, username, password_hash FROM users WHERE email = $1",
-      [email]
-    );
+    const { rows } = await client.query("SELECT id, email, username, password_hash FROM users WHERE email = $1", [
+      email,
+    ]);
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });

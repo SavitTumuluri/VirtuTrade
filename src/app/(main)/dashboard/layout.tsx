@@ -8,12 +8,12 @@ import UserMenu from "@/components/user-menu";
 import { cn } from "@/lib/utils";
 import { getPreference } from "@/server/server-actions";
 import {
-  SIDEBAR_VARIANT_VALUES,
-  SIDEBAR_COLLAPSIBLE_VALUES,
   CONTENT_LAYOUT_VALUES,
-  type SidebarVariant,
-  type SidebarCollapsible,
+  SIDEBAR_COLLAPSIBLE_VALUES,
+  SIDEBAR_VARIANT_VALUES,
   type ContentLayout,
+  type SidebarCollapsible,
+  type SidebarVariant,
 } from "@/types/preferences/layout";
 
 import { LayoutControls } from "./_components/sidebar/layout-controls";
@@ -56,7 +56,7 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
             <div className="flex items-center gap-2">
               <LayoutControls {...layoutPreferences} />
               <ThemeSwitcher />
-              <UserMenu /> {/* ⟵ per-user avatar + dropdown + logout */}
+              <UserMenu />
             </div>
           </div>
         </header>

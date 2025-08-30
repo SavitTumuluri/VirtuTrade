@@ -73,7 +73,7 @@ export const sidebarItems: NavGroup[] = [
       },
     ],
   },
-/*  {
+  /*  {
     id: 1,
     label: "Dashboards",
     items: [

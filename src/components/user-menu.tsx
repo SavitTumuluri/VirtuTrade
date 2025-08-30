@@ -7,10 +7,5 @@ export default async function UserMenu() {
   // If not logged in, hide the button entirely
   if (!me) return null;
 
-  return (
-    <ClientUserMenu
-      username={me.username}
-      email={me.email}
-    />
-  );
+  return <ClientUserMenu username={me.username} email={me.email} />;
 }

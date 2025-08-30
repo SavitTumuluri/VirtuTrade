@@ -19,7 +19,10 @@ const UsernameSchema = z
 const FormSchema = z
   .object({
     username: UsernameSchema,
-    email: z.string().email({ message: "Please enter a valid email address." }).transform((v) => v.trim()),
+    email: z
+      .string()
+      .email({ message: "Please enter a valid email address." })
+      .transform((v) => v.trim()),
     password: z.string().min(6, { message: "Password must be at least 6 characters." }),
     confirmPassword: z.string().min(6, { message: "Confirm Password must be at least 6 characters." }),
   })

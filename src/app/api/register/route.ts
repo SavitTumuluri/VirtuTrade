@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   const { email, password, username } = await req.json();
 
   const cleanEmail = typeof email === "string" ? email.trim() : "";
-  const cleanUser  = typeof username === "string" ? username.trim() : "";
+  const cleanUser = typeof username === "string" ? username.trim() : "";
 
   if (!cleanEmail || !password || !cleanUser) {
     return NextResponse.json({ error: "Missing email, username, or password." }, { status: 400 });
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   if (!/^[a-zA-Z0-9_]{3,30}$/.test(cleanUser)) {
     return NextResponse.json(
       { error: "Username must be 3-30 chars; letters, numbers, and underscores only." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
 
     const insert = await client.query(
       "INSERT INTO users (email, password_hash, username) VALUES ($1, $2, $3) RETURNING id, email, username",
-      [cleanEmail, passwordHash, cleanUser]
+      [cleanEmail, passwordHash, cleanUser],
     );
 
     return NextResponse.json({ ok: true, user: insert.rows[0] }, { status: 201 });
