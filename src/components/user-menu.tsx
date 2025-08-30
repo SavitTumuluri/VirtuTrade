@@ -1,5 +1,6 @@
-import ClientUserMenu from "./user-menu.client";
 import { getAuthUser } from "@/lib/auth";
+
+import ClientUserMenu from "./user-menu.client";
 
 export default async function UserMenu() {
   const me = await getAuthUser();

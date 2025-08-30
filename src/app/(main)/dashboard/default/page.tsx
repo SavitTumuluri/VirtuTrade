@@ -1,7 +1,7 @@
+import { redirect } from "next/navigation";
+
 import UserMenu from "@/components/user-menu";
 import { getAuthUser } from "@/lib/auth";
-
-import { redirect } from "next/navigation";
 
 import { ChartAreaInteractive } from "./_components/chart-area-interactive";
 import { InputForm } from "./_components/form";
@@ -12,7 +12,6 @@ import { VolumeGraph } from "./_components/volume-chart";
 export default async function Page() {
   const me = await getAuthUser();
   if (!me) redirect("/auth/v1/login");
-  
   return (
     <div className="@container/main flex flex-col gap-4 md:gap-6">
       {/* Top bar */}
