@@ -27,8 +27,8 @@ export default async function Page() {
       <StockProvider>
         <ChartAreaInteractive />
         <VolumeGraph />
-        <InputForm />
-        <TradeForm />
+          <InputForm />
+          <TradeForm />
       </StockProvider>
 
       {/* Per-user holdings & orders pulled from the DB via /api/portfolio/* */}

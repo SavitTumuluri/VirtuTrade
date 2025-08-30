@@ -59,9 +59,9 @@ export default function TradeForm() {
   }
 
   return (
-    <Card className="mt-10 max-w-md shadow-lg">
+    <Card className="max-w-md shadow-lg">
       <CardHeader>
-        <CardTitle>Trade Form</CardTitle>
+        <CardTitle>what If</CardTitle>
       </CardHeader>
 
       <form onSubmit={onSubmit} className="contents">
