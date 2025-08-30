@@ -28,6 +28,26 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Missing ticker" }, { status: 400 });
   }
 
+  // Get for  specific date
+
+  const specificDate = searchParams.get("date");
+
+  let ourPath: string;
+  if (specificDate) {
+    const specificDateParam = new Date(specificDate);
+    const v2 = new Date(specificDateParam);
+    v2.setDate(v2.getDate() - 7);
+    ourPath =
+      path +
+      `tiingo/daily/${ticker}/prices?startDate=${v2.toISOString().split("T")[0]}&endDate=${specificDateParam.toISOString().split("T")[0]}&token=${process.env.API_KEY}`;
+    const result = await fetch(ourPath);
+    if (!result.ok) {
+      return NextResponse.json({ error: "Failed to fetch external API" }, { status: 500 });
+    }
+    const data = await result.json();
+    return NextResponse.json(data);
+  }
+
   // Mock path for both modes
   if (process.env.USE_MOCK_STOCK_DATA === "true") {
     const arr = JSON.parse(fakeData) as Array<{ date: string; close: number }>;
